@@ -1,33 +1,71 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Task } from '@/types/task';
-import { Trash2, Check } from 'lucide-react';
+import { Trash2, Check, Pencil, X } from 'lucide-react';
 
 interface TaskItemProps {
   task: Task;
   onToggle: (id: string) => void;
   onDelete: (id: string) => void;
+  onEdit: (id: string, newTitle: string) => void;
 }
 
 export const TaskItem: React.FC<TaskItemProps> = ({
   task,
   onToggle,
   onDelete,
+  onEdit,
 }) => {
+  const [isEditing, setIsEditing] = useState(false);
+  const [editTitle, setEditTitle] = useState(task.title);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (isEditing && inputRef.current) {
+      inputRef.current.focus();
+      inputRef.current.select();
+    }
+  }, [isEditing]);
+
+  const handleSaveEdit = () => {
+    const trimmed = editTitle.trim();
+    if (trimmed && trimmed !== task.title) {
+      onEdit(task.id, trimmed);
+    } else {
+      setEditTitle(task.title);
+    }
+    setIsEditing(false);
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      handleSaveEdit();
+    } else if (e.key === 'Escape') {
+      setEditTitle(task.title);
+      setIsEditing(false);
+    }
+  };
+
+  const priorityStyles = {
+    high: 'bg-rose-50 text-rose-700 border-rose-200/80',
+    medium: 'bg-amber-50 text-amber-700 border-amber-200/80',
+    low: 'bg-slate-100 text-slate-600 border-slate-200/80',
+  };
+
   return (
     <div
       className={`group flex items-center justify-between gap-3 p-3.5 sm:p-4 rounded-xl border transition-all duration-150 ${
         task.completed
-          ? 'bg-slate-50/50 border-slate-200/70 hover:bg-slate-50'
+          ? 'bg-slate-50/60 border-slate-200/80 hover:bg-slate-50'
           : 'bg-white border-slate-200 hover:border-blue-300 hover:shadow-xs'
       }`}
     >
-      {/* Left side: Checkbox + Task Title */}
+      {/* Left section: Checkbox + Title / Inline Edit */}
       <div className="flex items-center gap-3 min-w-0 flex-1">
         <label
           htmlFor={`task-check-${task.id}`}
-          className="relative flex items-center justify-center w-5 h-5 rounded-md cursor-pointer shrink-0 transition-colors"
+          className="relative flex items-center justify-center w-5 h-5 rounded-md cursor-pointer shrink-0 transition-transform active:scale-95"
         >
           <input
             id={`task-check-${task.id}`}
@@ -50,22 +88,83 @@ export const TaskItem: React.FC<TaskItemProps> = ({
           </div>
         </label>
 
-        <span
-          onClick={() => onToggle(task.id)}
-          className={`text-sm sm:text-base break-words cursor-pointer select-none transition-all ${
-            task.completed
-              ? 'line-through text-slate-400'
-              : 'text-slate-700 font-medium hover:text-blue-700'
-          }`}
-          title={task.title}
-        >
-          {task.title}
-        </span>
+        {isEditing ? (
+          <div className="flex items-center gap-2 flex-1 mr-2">
+            <input
+              ref={inputRef}
+              type="text"
+              value={editTitle}
+              onChange={(e) => setEditTitle(e.target.value)}
+              onKeyDown={handleKeyDown}
+              onBlur={handleSaveEdit}
+              className="w-full px-2.5 py-1 text-sm bg-white border border-blue-500 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-100 text-slate-900"
+              aria-label="Edit task title"
+            />
+            <button
+              type="button"
+              onMouseDown={handleSaveEdit}
+              className="p-1 text-emerald-600 hover:bg-emerald-50 rounded-md"
+              title="Save changes"
+            >
+              <Check className="w-4 h-4" />
+            </button>
+            <button
+              type="button"
+              onMouseDown={() => {
+                setEditTitle(task.title);
+                setIsEditing(false);
+              }}
+              className="p-1 text-slate-400 hover:bg-slate-100 rounded-md"
+              title="Cancel"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+        ) : (
+          <div className="flex items-center gap-2 min-w-0 flex-1">
+            <span
+              onDoubleClick={() => !task.completed && setIsEditing(true)}
+              onClick={() => onToggle(task.id)}
+              className={`text-sm sm:text-base break-words cursor-pointer select-none transition-all ${
+                task.completed
+                  ? 'line-through text-slate-400'
+                  : 'text-slate-800 font-medium hover:text-blue-700'
+              }`}
+              title="Click to toggle, double-click to edit"
+            >
+              {task.title}
+            </span>
+
+            {/* Optional Priority Tag */}
+            {task.priority && (
+              <span
+                className={`hidden sm:inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-semibold border uppercase tracking-wider select-none shrink-0 ${
+                  priorityStyles[task.priority] || priorityStyles.medium
+                }`}
+              >
+                {task.priority}
+              </span>
+            )}
+          </div>
+        )}
       </div>
 
-      {/* Right side: Status Badge + Delete Button */}
-      <div className="flex items-center gap-2 sm:gap-3 shrink-0">
-        {/* Status Label Pill */}
+      {/* Right section: Edit Pencil, Status Badge, Delete Button */}
+      <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0">
+        {/* Quick Edit Button (shown on hover) */}
+        {!isEditing && !task.completed && (
+          <button
+            type="button"
+            onClick={() => setIsEditing(true)}
+            className="opacity-0 group-hover:opacity-100 p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all cursor-pointer focus:opacity-100"
+            title="Edit task"
+            aria-label="Edit task title"
+          >
+            <Pencil className="w-3.5 h-3.5" />
+          </button>
+        )}
+
+        {/* Status Pill Badge */}
         <span
           className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold select-none border transition-colors ${
             task.completed

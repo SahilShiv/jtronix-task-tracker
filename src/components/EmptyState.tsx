@@ -2,19 +2,45 @@
 
 import React from 'react';
 import { TaskFilter } from '@/types/task';
-import { ClipboardList, CheckCircle2, Clock } from 'lucide-react';
+import { ClipboardList, CheckCircle2, Clock, Search } from 'lucide-react';
 
 interface EmptyStateProps {
   filter: TaskFilter;
   hasAnyTasks: boolean;
+  searchQuery?: string;
   onResetFilter?: () => void;
 }
 
 export const EmptyState: React.FC<EmptyStateProps> = ({
   filter,
   hasAnyTasks,
+  searchQuery,
   onResetFilter,
 }) => {
+  if (searchQuery) {
+    return (
+      <div className="py-12 px-4 text-center">
+        <div className="w-14 h-14 mx-auto mb-3 rounded-2xl bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-500 shadow-xs">
+          <Search className="w-6 h-6" />
+        </div>
+        <h3 className="text-base font-semibold text-slate-800 mb-1">
+          No matches found
+        </h3>
+        <p className="text-xs sm:text-sm text-slate-500 max-w-sm mx-auto mb-3">
+          No tasks match &ldquo;{searchQuery}&rdquo;. Try adjusting your keywords.
+        </p>
+        {onResetFilter && (
+          <button
+            onClick={onResetFilter}
+            className="text-xs font-semibold text-blue-600 hover:text-blue-800 underline underline-offset-2 cursor-pointer"
+          >
+            Clear filters
+          </button>
+        )}
+      </div>
+    );
+  }
+
   if (!hasAnyTasks) {
     return (
       <div className="py-12 px-4 text-center">
@@ -46,7 +72,7 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
         {onResetFilter && (
           <button
             onClick={onResetFilter}
-            className="text-xs font-medium text-blue-600 hover:text-blue-800 underline underline-offset-2 cursor-pointer"
+            className="text-xs font-semibold text-blue-600 hover:text-blue-800 underline underline-offset-2 cursor-pointer"
           >
             View all tasks
           </button>
@@ -70,7 +96,7 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
         {onResetFilter && (
           <button
             onClick={onResetFilter}
-            className="text-xs font-medium text-blue-600 hover:text-blue-800 underline underline-offset-2 cursor-pointer"
+            className="text-xs font-semibold text-blue-600 hover:text-blue-800 underline underline-offset-2 cursor-pointer"
           >
             View all tasks
           </button>

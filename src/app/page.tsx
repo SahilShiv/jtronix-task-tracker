@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useMemo, useSyncExternalStore } from 'react';
-import { Task, TaskFilter, TaskStats as TaskStatsType } from '@/types/task';
+import { Task, TaskFilter, Priority, TaskStats as TaskStatsType } from '@/types/task';
 import {
   getTasksSnapshot,
   getServerTasksSnapshot,
@@ -19,7 +19,7 @@ import { AppFooter } from '@/components/AppFooter';
 import { Toast } from '@/components/Toast';
 
 export default function TaskTrackerPage() {
-  // Use React 19's official external store hook for safe hydration & instant localStorage sync
+  // Use React 19 external store hook for safe SSR hydration & instant localStorage sync
   const tasks = useSyncExternalStore(
     subscribeToTasks,
     getTasksSnapshot,
@@ -27,13 +27,14 @@ export default function TaskTrackerPage() {
   );
 
   const [currentFilter, setCurrentFilter] = useState<TaskFilter>('all');
+  const [searchQuery, setSearchQuery] = useState('');
   const [deletedTaskInfo, setDeletedTaskInfo] = useState<{
     task: Task;
     index: number;
   } | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
-  // Derived Statistics (No redundant state)
+  // Derived Statistics
   const stats: TaskStatsType = useMemo(() => {
     const total = tasks.length;
     const completed = tasks.filter((t) => t.completed).length;
@@ -57,28 +58,35 @@ export default function TaskTrackerPage() {
     };
   }, [tasks.length, stats.pending, stats.completed]);
 
-  // Filtered tasks display
+  // Filtered & Searched tasks display
   const filteredTasks = useMemo(() => {
-    switch (currentFilter) {
-      case 'pending':
-        return tasks.filter((t) => !t.completed);
-      case 'completed':
-        return tasks.filter((t) => t.completed);
-      case 'all':
-      default:
-        return tasks;
+    let result = tasks;
+
+    // Apply status filter
+    if (currentFilter === 'pending') {
+      result = result.filter((t) => !t.completed);
+    } else if (currentFilter === 'completed') {
+      result = result.filter((t) => t.completed);
     }
-  }, [tasks, currentFilter]);
+
+    // Apply keyword search
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase().trim();
+      result = result.filter((t) => t.title.toLowerCase().includes(q));
+    }
+
+    return result;
+  }, [tasks, currentFilter, searchQuery]);
 
   // Handlers for task mutations
-  const handleAddTask = (title: string) => {
+  const handleAddTask = (title: string, priority: Priority = 'medium') => {
     const newTask: Task = {
       id: generateTaskId(),
       title,
       completed: false,
+      priority,
       createdAt: new Date().toISOString(),
     };
-    // Prepend so newly added task appears at the top
     updateTasksStorage([newTask, ...tasks]);
   };
 
@@ -87,6 +95,14 @@ export default function TaskTrackerPage() {
       t.id === id ? { ...t, completed: !t.completed } : t
     );
     updateTasksStorage(updated);
+  };
+
+  const handleEditTask = (id: string, newTitle: string) => {
+    const updated = tasks.map((t) =>
+      t.id === id ? { ...t, title: newTitle } : t
+    );
+    updateTasksStorage(updated);
+    setToastMessage('Task updated');
   };
 
   const handleDeleteTask = (id: string) => {
@@ -122,9 +138,26 @@ export default function TaskTrackerPage() {
     setDeletedTaskInfo(null);
   };
 
+  const handleExportJSON = () => {
+    if (tasks.length === 0) return;
+    const dataStr = 'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(tasks, null, 2));
+    const downloadAnchor = document.createElement('a');
+    downloadAnchor.setAttribute('href', dataStr);
+    downloadAnchor.setAttribute('download', `task-tracker-backup-${new Date().toISOString().slice(0, 10)}.json`);
+    document.body.appendChild(downloadAnchor);
+    downloadAnchor.click();
+    downloadAnchor.remove();
+    setToastMessage('Tasks exported to JSON');
+  };
+
+  const handleResetFilters = () => {
+    setCurrentFilter('all');
+    setSearchQuery('');
+  };
+
   return (
     <div className="min-h-screen flex flex-col bg-slate-50 text-slate-900 font-sans selection:bg-blue-100 selection:text-blue-900">
-      {/* 1. Header with branding and local storage indicator */}
+      {/* 1. Header with branding and live date */}
       <AppHeader
         appName="Task Tracker"
         subtitle="A clearer way to get things done."
@@ -147,10 +180,12 @@ export default function TaskTrackerPage() {
         {/* Add Task Input Form */}
         <TaskForm onAddTask={handleAddTask} />
 
-        {/* Filter Controls & Current View indicator */}
+        {/* Filter Controls, Search Bar & Current View indicator */}
         <TaskFilters
           currentFilter={currentFilter}
           onFilterChange={setCurrentFilter}
+          searchQuery={searchQuery}
+          onSearchChange={setSearchQuery}
           counts={filterCounts}
         />
 
@@ -159,10 +194,13 @@ export default function TaskTrackerPage() {
           tasks={tasks}
           filteredTasks={filteredTasks}
           filter={currentFilter}
+          searchQuery={searchQuery}
           onToggle={handleToggleTask}
           onDelete={handleDeleteTask}
+          onEdit={handleEditTask}
           onClearCompleted={handleClearCompleted}
-          onResetFilter={() => setCurrentFilter('all')}
+          onResetFilter={handleResetFilters}
+          onExportJSON={handleExportJSON}
         />
       </main>
 
