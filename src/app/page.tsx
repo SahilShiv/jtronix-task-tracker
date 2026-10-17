@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useMemo, useSyncExternalStore } from 'react';
-import { Task, TaskFilter, Priority, TaskStats as TaskStatsType } from '@/types/task';
+import { Task, TaskFilter, TaskStats as TaskStatsType } from '@/types/task';
 import {
   getTasksSnapshot,
   getServerTasksSnapshot,
@@ -9,25 +9,23 @@ import {
   updateTasksStorage,
   generateTaskId,
 } from '@/lib/task-storage';
-import { AppHeader } from '@/components/AppHeader';
-import { ProgressOverview } from '@/components/ProgressOverview';
-import { TaskStats } from '@/components/TaskStats';
+import { AppHeader, SectionMode } from '@/components/AppHeader';
 import { TaskForm } from '@/components/TaskForm';
+import { TaskStats } from '@/components/TaskStats';
 import { TaskFilters } from '@/components/TaskFilters';
 import { TaskList } from '@/components/TaskList';
-import { AppFooter } from '@/components/AppFooter';
 import { Toast } from '@/components/Toast';
 
 export default function TaskTrackerPage() {
-  // Use React 19 external store hook for safe SSR hydration & instant localStorage sync
+  // Sync with localStorage safely with React 19 external store hook
   const tasks = useSyncExternalStore(
     subscribeToTasks,
     getTasksSnapshot,
     getServerTasksSnapshot
   );
 
+  const [sectionMode, setSectionMode] = useState<SectionMode>('1.3');
   const [currentFilter, setCurrentFilter] = useState<TaskFilter>('all');
-  const [searchQuery, setSearchQuery] = useState('');
   const [deletedTaskInfo, setDeletedTaskInfo] = useState<{
     task: Task;
     index: number;
@@ -49,42 +47,27 @@ export default function TaskTrackerPage() {
     };
   }, [tasks]);
 
-  // Filter counts for badges
-  const filterCounts = useMemo(() => {
-    return {
-      all: tasks.length,
-      pending: stats.pending,
-      completed: stats.completed,
-    };
-  }, [tasks.length, stats.pending, stats.completed]);
-
-  // Filtered & Searched tasks display
+  // Filtered tasks display
   const filteredTasks = useMemo(() => {
-    let result = tasks;
+    if (sectionMode === '1.1') {
+      return tasks;
+    }
 
-    // Apply status filter
     if (currentFilter === 'pending') {
-      result = result.filter((t) => !t.completed);
-    } else if (currentFilter === 'completed') {
-      result = result.filter((t) => t.completed);
+      return tasks.filter((t) => !t.completed);
     }
-
-    // Apply keyword search
-    if (searchQuery.trim()) {
-      const q = searchQuery.toLowerCase().trim();
-      result = result.filter((t) => t.title.toLowerCase().includes(q));
+    if (currentFilter === 'completed') {
+      return tasks.filter((t) => t.completed);
     }
-
-    return result;
-  }, [tasks, currentFilter, searchQuery]);
+    return tasks;
+  }, [tasks, sectionMode, currentFilter]);
 
   // Handlers for task mutations
-  const handleAddTask = (title: string, priority: Priority = 'medium') => {
+  const handleAddTask = (title: string) => {
     const newTask: Task = {
       id: generateTaskId(),
       title,
       completed: false,
-      priority,
       createdAt: new Date().toISOString(),
     };
     updateTasksStorage([newTask, ...tasks]);
@@ -95,14 +78,6 @@ export default function TaskTrackerPage() {
       t.id === id ? { ...t, completed: !t.completed } : t
     );
     updateTasksStorage(updated);
-  };
-
-  const handleEditTask = (id: string, newTitle: string) => {
-    const updated = tasks.map((t) =>
-      t.id === id ? { ...t, title: newTitle } : t
-    );
-    updateTasksStorage(updated);
-    setToastMessage('Task updated');
   };
 
   const handleDeleteTask = (id: string) => {
@@ -128,86 +103,47 @@ export default function TaskTrackerPage() {
     setToastMessage(null);
   };
 
-  const handleClearCompleted = () => {
-    const completedTasks = tasks.filter((t) => t.completed);
-    if (completedTasks.length === 0) return;
-
-    const remainingTasks = tasks.filter((t) => !t.completed);
-    updateTasksStorage(remainingTasks);
-    setToastMessage(`Cleared ${completedTasks.length} completed tasks`);
-    setDeletedTaskInfo(null);
-  };
-
-  const handleExportJSON = () => {
-    if (tasks.length === 0) return;
-    const dataStr = 'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(tasks, null, 2));
-    const downloadAnchor = document.createElement('a');
-    downloadAnchor.setAttribute('href', dataStr);
-    downloadAnchor.setAttribute('download', `task-tracker-backup-${new Date().toISOString().slice(0, 10)}.json`);
-    document.body.appendChild(downloadAnchor);
-    downloadAnchor.click();
-    downloadAnchor.remove();
-    setToastMessage('Tasks exported to JSON');
-  };
-
-  const handleResetFilters = () => {
-    setCurrentFilter('all');
-    setSearchQuery('');
-  };
-
   return (
-    <div className="min-h-screen flex flex-col bg-slate-50 text-slate-900 font-sans selection:bg-blue-100 selection:text-blue-900">
-      {/* 1. Header with branding and live date */}
+    <div className="min-h-screen flex flex-col bg-[#f4f7fb] text-slate-900 font-sans antialiased">
+      {/* 1. Header with branding and section switcher */}
       <AppHeader
-        appName="Task Tracker"
-        subtitle="A clearer way to get things done."
+        currentSection={sectionMode}
+        onSectionChange={setSectionMode}
       />
 
-      {/* 2. Main Dashboard Content */}
-      <main className="flex-1 max-w-4xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
-        {/* Progress Overview */}
-        <ProgressOverview
-          total={stats.total}
-          completed={stats.completed}
-          completionRate={stats.completionRate}
-        />
+      {/* 2. Main Dashboard Content inside unified Card */}
+      <main className="flex-1 w-full max-w-2xl mx-auto px-4 py-8 sm:py-12">
+        <div className="bg-white rounded-2xl border border-slate-200/90 shadow-xs p-6 sm:p-8">
+          {/* Add Task Input Form */}
+          <TaskForm
+            sectionMode={sectionMode}
+            onAddTask={handleAddTask}
+          />
 
-        {/* Statistics Cards */}
-        <div className="mb-6">
-          <TaskStats stats={stats} />
+          {/* Section 1.2 & 1.3: Statistics Summary Box */}
+          {sectionMode !== '1.1' && <TaskStats stats={stats} />}
+
+          {/* Section 1.2 & 1.3: Filter Controls & Current View Banner */}
+          {sectionMode !== '1.1' && (
+            <TaskFilters
+              sectionMode={sectionMode}
+              currentFilter={currentFilter}
+              onFilterChange={setCurrentFilter}
+            />
+          )}
+
+          {/* Task List Items */}
+          <TaskList
+            tasks={tasks}
+            filteredTasks={filteredTasks}
+            sectionMode={sectionMode}
+            onToggle={handleToggleTask}
+            onDelete={handleDeleteTask}
+          />
         </div>
-
-        {/* Add Task Input Form */}
-        <TaskForm onAddTask={handleAddTask} />
-
-        {/* Filter Controls, Search Bar & Current View indicator */}
-        <TaskFilters
-          currentFilter={currentFilter}
-          onFilterChange={setCurrentFilter}
-          searchQuery={searchQuery}
-          onSearchChange={setSearchQuery}
-          counts={filterCounts}
-        />
-
-        {/* Task List / Empty States */}
-        <TaskList
-          tasks={tasks}
-          filteredTasks={filteredTasks}
-          filter={currentFilter}
-          searchQuery={searchQuery}
-          onToggle={handleToggleTask}
-          onDelete={handleDeleteTask}
-          onEdit={handleEditTask}
-          onClearCompleted={handleClearCompleted}
-          onResetFilter={handleResetFilters}
-          onExportJSON={handleExportJSON}
-        />
       </main>
 
-      {/* 3. Footer */}
-      <AppFooter />
-
-      {/* 4. Non-intrusive Undo Toast */}
+      {/* 3. Non-intrusive Undo Toast */}
       {toastMessage && (
         <Toast
           message={toastMessage}

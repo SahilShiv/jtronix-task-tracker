@@ -1,28 +1,31 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Plus, AlertCircle, Flag } from 'lucide-react';
-import { Priority } from '@/types/task';
+import { SectionMode } from './AppHeader';
 
 interface TaskFormProps {
-  onAddTask: (title: string, priority: Priority) => void;
+  sectionMode: SectionMode;
+  onAddTask: (title: string) => void;
 }
 
-export const TaskForm: React.FC<TaskFormProps> = ({ onAddTask }) => {
+export const TaskForm: React.FC<TaskFormProps> = ({ sectionMode, onAddTask }) => {
   const [inputTitle, setInputTitle] = useState('');
-  const [priority, setPriority] = useState<Priority>('medium');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  const isSection11 = sectionMode === '1.1';
+  const placeholder = isSection11 ? 'Enter a task...' : 'Enter a new task...';
+  const buttonLabel = isSection11 ? 'Add' : 'Add Task';
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const trimmed = inputTitle.trim();
 
     if (!trimmed) {
-      setErrorMessage('Please enter a task title before adding.');
+      setErrorMessage('Please enter a task before adding.');
       return;
     }
 
-    onAddTask(trimmed, priority);
+    onAddTask(trimmed);
     setInputTitle('');
     setErrorMessage(null);
   };
@@ -34,79 +37,47 @@ export const TaskForm: React.FC<TaskFormProps> = ({ onAddTask }) => {
     }
   };
 
-  const priorities: { id: Priority; label: string; activeColor: string }[] = [
-    { id: 'low', label: 'Low', activeColor: 'bg-slate-700 text-white' },
-    { id: 'medium', label: 'Medium', activeColor: 'bg-amber-600 text-white' },
-    { id: 'high', label: 'High', activeColor: 'bg-rose-600 text-white' },
-  ];
-
   return (
-    <div className="bg-white rounded-2xl border border-slate-200/90 shadow-sm p-5 sm:p-6 mb-6">
-      <div className="flex items-center justify-between mb-3">
-        <h3 className="text-base font-semibold text-slate-800">
+    <div className="w-full">
+      {/* Section 1.1 displays "Add a New Task" heading */}
+      {isSection11 && (
+        <h2 className="text-base font-bold text-slate-800 mb-3 tracking-tight">
           Add a New Task
-        </h3>
+        </h2>
+      )}
 
-        {/* Priority Selector */}
-        <div className="flex items-center gap-1.5 bg-slate-100 p-1 rounded-xl text-xs">
-          <span className="text-slate-400 pl-1.5 pr-0.5 hidden sm:inline-flex items-center gap-1 font-medium">
-            <Flag className="w-3 h-3" /> Priority:
-          </span>
-          {priorities.map((p) => (
-            <button
-              key={p.id}
-              type="button"
-              onClick={() => setPriority(p.id)}
-              className={`px-2.5 py-1 rounded-lg font-medium transition-all cursor-pointer ${
-                priority === p.id
-                  ? `${p.activeColor} shadow-xs`
-                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/70'
-              }`}
-            >
-              {p.label}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      <form onSubmit={handleSubmit} className="space-y-2">
-        <div className="flex flex-col sm:flex-row gap-3">
-          <div className="relative flex-1">
-            <input
-              id="task-input"
-              type="text"
-              value={inputTitle}
-              onChange={handleChange}
-              placeholder="Enter a new task..."
-              className={`w-full px-4 py-3 rounded-xl border text-sm text-slate-900 placeholder-slate-400 bg-slate-50/60 focus:bg-white focus:outline-none transition-all duration-150 ${
-                errorMessage
-                  ? 'border-red-400 focus:border-red-500 focus:ring-2 focus:ring-red-100'
-                  : 'border-slate-200 focus:border-blue-600 focus:ring-2 focus:ring-blue-100'
-              }`}
-              aria-label="New task title"
-              aria-invalid={errorMessage ? 'true' : 'false'}
-              aria-describedby={errorMessage ? 'task-error-message' : undefined}
-            />
-          </div>
+      <form onSubmit={handleSubmit} className="space-y-1.5">
+        <div className="flex items-center gap-3">
+          <input
+            id="task-input"
+            type="text"
+            value={inputTitle}
+            onChange={handleChange}
+            placeholder={placeholder}
+            className={`flex-1 px-4 py-2.5 rounded-lg border text-sm text-slate-800 placeholder-slate-400 bg-white transition-all duration-150 ${
+              errorMessage
+                ? 'border-red-400 focus:border-red-500 focus:ring-2 focus:ring-red-100'
+                : 'border-slate-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 focus:outline-none'
+            }`}
+            aria-label="New task title"
+            aria-invalid={errorMessage ? 'true' : 'false'}
+          />
 
           <button
             type="submit"
-            className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white font-semibold text-sm shadow-sm hover:shadow transition-all duration-150 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-blue-400 shrink-0"
+            className="px-5 py-2.5 rounded-lg bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white font-medium text-sm transition-colors duration-150 cursor-pointer shrink-0"
           >
-            <Plus className="w-4 h-4 stroke-[2.5]" />
-            <span>Add Task</span>
+            {buttonLabel}
           </button>
         </div>
 
         {errorMessage && (
-          <div
-            id="task-error-message"
+          <p
             role="alert"
-            className="flex items-center gap-1.5 text-xs font-medium text-red-600 pt-1 pl-1 transition-opacity animate-in fade-in"
+            className="text-xs text-red-500 pt-0.5 pl-1 font-medium animate-in fade-in"
           >
-            <AlertCircle className="w-3.5 h-3.5 shrink-0" />
-            <span>{errorMessage}</span>
-          </div>
+            {errorMessage}
+          </p>
         )}
       </form>
     </div>

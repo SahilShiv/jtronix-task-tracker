@@ -1,33 +1,83 @@
 'use client';
 
 import React from 'react';
-import { CheckSquare } from 'lucide-react';
+import { Check } from 'lucide-react';
+
+export type SectionMode = '1.1' | '1.2' | '1.3';
 
 interface AppHeaderProps {
-  appName?: string;
-  subtitle?: string;
+  currentSection: SectionMode;
+  onSectionChange: (section: SectionMode) => void;
 }
 
 export const AppHeader: React.FC<AppHeaderProps> = ({
-  appName = 'Task Tracker',
-  subtitle = 'A clearer way to get things done.',
+  currentSection,
+  onSectionChange,
 }) => {
+  // Section 1.1 uses bright royal blue, Section 1.2 & 1.3 use dark navy slate
+  const headerBg =
+    currentSection === '1.1' ? 'bg-[#2563eb]' : 'bg-[#1f2d42]';
+  const iconColor =
+    currentSection === '1.1' ? 'text-[#2563eb]' : 'text-[#1f2d42]';
+
   return (
-    <header className="w-full bg-gradient-to-r from-blue-700 via-blue-600 to-indigo-700 text-white shadow-md">
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-5">
-        <div className="flex items-center space-x-3.5">
-          <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-white/15 backdrop-blur-sm border border-white/20 text-white shadow-sm">
-            <CheckSquare className="w-6 h-6 stroke-[2.3]" />
+    <header className={`w-full ${headerBg} text-white shadow-xs transition-colors duration-200`}>
+      <div className="max-w-3xl mx-auto px-4 sm:px-6 py-3.5 flex items-center justify-between">
+        {/* Left: App Logo & Name */}
+        <div className="flex items-center space-x-3">
+          <div className="w-7 h-7 bg-white rounded-md flex items-center justify-center shadow-xs">
+            <Check className={`w-4 h-4 ${iconColor} stroke-[3.2]`} />
           </div>
-          <div>
-            <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-white leading-tight">
-              {appName}
-            </h1>
-            <p className="text-xs sm:text-sm text-blue-100/90 font-medium mt-0.5">
-              {subtitle}
-            </p>
-          </div>
+          <span className="text-lg font-bold tracking-tight text-white select-none">
+            Task Tracker
+          </span>
         </div>
+
+        {/* Right: Section View Switcher */}
+        <nav
+          aria-label="Assessment Section Switcher"
+          className="flex items-center gap-1 bg-black/20 p-1 rounded-lg text-xs"
+        >
+          <span className="text-white/60 px-1.5 font-medium hidden sm:inline text-[11px]">
+            View:
+          </span>
+          <button
+            type="button"
+            onClick={() => onSectionChange('1.1')}
+            className={`px-2.5 py-1 rounded-md font-medium transition-all cursor-pointer ${
+              currentSection === '1.1'
+                ? 'bg-white text-slate-900 shadow-xs'
+                : 'text-white/80 hover:text-white hover:bg-white/10'
+            }`}
+            title="Section 1.1: Create and Display Tasks"
+          >
+            Sec 1.1
+          </button>
+          <button
+            type="button"
+            onClick={() => onSectionChange('1.2')}
+            className={`px-2.5 py-1 rounded-md font-medium transition-all cursor-pointer ${
+              currentSection === '1.2'
+                ? 'bg-white text-slate-900 shadow-xs'
+                : 'text-white/80 hover:text-white hover:bg-white/10'
+            }`}
+            title="Section 1.2: Manage Tasks"
+          >
+            Sec 1.2
+          </button>
+          <button
+            type="button"
+            onClick={() => onSectionChange('1.3')}
+            className={`px-2.5 py-1 rounded-md font-medium transition-all cursor-pointer ${
+              currentSection === '1.3'
+                ? 'bg-white text-slate-900 shadow-xs'
+                : 'text-white/80 hover:text-white hover:bg-white/10'
+            }`}
+            title="Section 1.3: Filter and Save Tasks"
+          >
+            Sec 1.3
+          </button>
+        </nav>
       </div>
     </header>
   );

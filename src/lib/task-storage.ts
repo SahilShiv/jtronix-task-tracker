@@ -27,14 +27,14 @@ export const DEFAULT_TASKS: Task[] = [
   },
   {
     id: 'task-4',
-    title: 'Design new feature wireframes',
+    title: 'Design new feature',
     completed: false,
     priority: 'medium',
     createdAt: new Date(Date.now() - 3600000 * 2).toISOString(),
   },
   {
     id: 'task-5',
-    title: 'Conduct frontend code review',
+    title: 'Write test cases',
     completed: false,
     priority: 'low',
     createdAt: new Date().toISOString(),
