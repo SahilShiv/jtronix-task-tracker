@@ -2,28 +2,19 @@
 
 import React from 'react';
 import { Task } from '@/types/task';
-import { SectionMode } from './AppHeader';
 import { Trash2, Check } from 'lucide-react';
 
 interface TaskItemProps {
   task: Task;
-  sectionMode: SectionMode;
   onToggle: (id: string) => void;
   onDelete: (id: string) => void;
 }
 
 export const TaskItem: React.FC<TaskItemProps> = ({
   task,
-  sectionMode,
   onToggle,
   onDelete,
 }) => {
-  const isSection11 = sectionMode === '1.1';
-  const isSection13 = sectionMode === '1.3';
-
-  // In Section 1.3, completed tasks display a line-through decoration
-  const isStrikethrough = isSection13 && task.completed;
-
   return (
     <div className="flex items-center justify-between p-3 sm:p-3.5 bg-white border border-slate-200/90 rounded-xl transition-all duration-150 hover:border-slate-300">
       {/* Left: Custom Checkbox + Task Title */}
@@ -45,27 +36,25 @@ export const TaskItem: React.FC<TaskItemProps> = ({
 
         <span
           onClick={() => onToggle(task.id)}
-          className={`text-sm text-slate-800 break-words cursor-pointer select-none leading-normal ${
-            isStrikethrough ? 'line-through text-slate-400' : 'text-slate-800'
+          className={`text-sm break-words cursor-pointer select-none leading-normal ${
+            task.completed ? 'line-through text-slate-400' : 'text-slate-800'
           }`}
         >
           {task.title}
         </span>
       </div>
 
-      {/* Right: Status Badge (Sec 1.2 & 1.3) + Delete Button */}
+      {/* Right: Status Badge + Delete Button */}
       <div className="flex items-center gap-3 shrink-0 ml-3">
-        {!isSection11 && (
-          <span
-            className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium select-none ${
-              task.completed
-                ? 'bg-emerald-50 text-emerald-600'
-                : 'bg-amber-50 text-amber-600'
-            }`}
-          >
-            {task.completed ? 'Completed' : 'Pending'}
-          </span>
-        )}
+        <span
+          className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium select-none ${
+            task.completed
+              ? 'bg-emerald-50 text-emerald-600'
+              : 'bg-amber-50 text-amber-600'
+          }`}
+        >
+          {task.completed ? 'Completed' : 'Pending'}
+        </span>
 
         <button
           type="button"

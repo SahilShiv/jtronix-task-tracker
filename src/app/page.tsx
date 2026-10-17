@@ -9,7 +9,7 @@ import {
   updateTasksStorage,
   generateTaskId,
 } from '@/lib/task-storage';
-import { AppHeader, SectionMode } from '@/components/AppHeader';
+import { AppHeader } from '@/components/AppHeader';
 import { TaskForm } from '@/components/TaskForm';
 import { TaskStats } from '@/components/TaskStats';
 import { TaskFilters } from '@/components/TaskFilters';
@@ -24,7 +24,6 @@ export default function TaskTrackerPage() {
     getServerTasksSnapshot
   );
 
-  const [sectionMode, setSectionMode] = useState<SectionMode>('1.3');
   const [currentFilter, setCurrentFilter] = useState<TaskFilter>('all');
   const [deletedTaskInfo, setDeletedTaskInfo] = useState<{
     task: Task;
@@ -32,7 +31,7 @@ export default function TaskTrackerPage() {
   } | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
-  // Derived Statistics
+  // Derived Statistics (Total, Completed, Pending)
   const stats: TaskStatsType = useMemo(() => {
     const total = tasks.length;
     const completed = tasks.filter((t) => t.completed).length;
@@ -47,12 +46,8 @@ export default function TaskTrackerPage() {
     };
   }, [tasks]);
 
-  // Filtered tasks display
+  // Filtered tasks display according to current filter tab
   const filteredTasks = useMemo(() => {
-    if (sectionMode === '1.1') {
-      return tasks;
-    }
-
     if (currentFilter === 'pending') {
       return tasks.filter((t) => !t.completed);
     }
@@ -60,7 +55,7 @@ export default function TaskTrackerPage() {
       return tasks.filter((t) => t.completed);
     }
     return tasks;
-  }, [tasks, sectionMode, currentFilter]);
+  }, [tasks, currentFilter]);
 
   // Handlers for task mutations
   const handleAddTask = (title: string) => {
@@ -105,38 +100,27 @@ export default function TaskTrackerPage() {
 
   return (
     <div className="min-h-screen flex flex-col bg-[#f4f7fb] text-slate-900 font-sans antialiased">
-      {/* 1. Header with branding and section switcher */}
-      <AppHeader
-        currentSection={sectionMode}
-        onSectionChange={setSectionMode}
-      />
+      {/* 1. Header with Task Tracker branding */}
+      <AppHeader />
 
       {/* 2. Main Dashboard Content inside unified Card */}
       <main className="flex-1 w-full max-w-2xl mx-auto px-4 py-8 sm:py-12">
         <div className="bg-white rounded-2xl border border-slate-200/90 shadow-xs p-6 sm:p-8">
           {/* Add Task Input Form */}
-          <TaskForm
-            sectionMode={sectionMode}
-            onAddTask={handleAddTask}
+          <TaskForm onAddTask={handleAddTask} />
+
+          {/* Statistics Summary Box: Total, Completed, Pending */}
+          <TaskStats stats={stats} />
+
+          {/* Filter Controls, Auto-save indicator, and Current View Banner */}
+          <TaskFilters
+            currentFilter={currentFilter}
+            onFilterChange={setCurrentFilter}
           />
-
-          {/* Section 1.2 & 1.3: Statistics Summary Box */}
-          {sectionMode !== '1.1' && <TaskStats stats={stats} />}
-
-          {/* Section 1.2 & 1.3: Filter Controls & Current View Banner */}
-          {sectionMode !== '1.1' && (
-            <TaskFilters
-              sectionMode={sectionMode}
-              currentFilter={currentFilter}
-              onFilterChange={setCurrentFilter}
-            />
-          )}
 
           {/* Task List Items */}
           <TaskList
-            tasks={tasks}
             filteredTasks={filteredTasks}
-            sectionMode={sectionMode}
             onToggle={handleToggleTask}
             onDelete={handleDeleteTask}
           />

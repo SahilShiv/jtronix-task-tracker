@@ -2,42 +2,24 @@ import { Task } from '@/types/task';
 
 export const STORAGE_KEY = 'jtronix_taskflow_tasks_v1';
 
-// Initial sample tasks matching the JTRONIX Assessment specification with priorities
 export const DEFAULT_TASKS: Task[] = [
   {
     id: 'task-1',
     title: 'Complete project documentation',
     completed: true,
-    priority: 'high',
     createdAt: new Date(Date.now() - 3600000 * 24).toISOString(),
   },
   {
     id: 'task-2',
-    title: 'Prepare for team meeting',
-    completed: false,
-    priority: 'high',
+    title: 'Fix login issue',
+    completed: true,
     createdAt: new Date(Date.now() - 3600000 * 12).toISOString(),
   },
   {
     id: 'task-3',
-    title: 'Fix login issue',
-    completed: true,
-    priority: 'medium',
+    title: 'Prepare for team meeting',
+    completed: false,
     createdAt: new Date(Date.now() - 3600000 * 6).toISOString(),
-  },
-  {
-    id: 'task-4',
-    title: 'Design new feature',
-    completed: false,
-    priority: 'medium',
-    createdAt: new Date(Date.now() - 3600000 * 2).toISOString(),
-  },
-  {
-    id: 'task-5',
-    title: 'Write test cases',
-    completed: false,
-    priority: 'low',
-    createdAt: new Date().toISOString(),
   },
 ];
 
