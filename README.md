@@ -5,15 +5,6 @@ A high-performance, accessible, responsive Task Tracker web application built fo
 
 ---
 
-## 🌟 Visual Preview
-
-| Desktop View | Mobile View |
-| :---: | :---: |
-<img width="1917" height="796" alt="image" src="https://github.com/user-attachments/assets/7606f993-15e0-4912-b715-76aebd0b2bf5" />
-<img width="1338" height="952" alt="image" src="https://github.com/user-attachments/assets/4aac33ec-f30b-4529-a31d-974070cad490" />
-<img width="1422" height="755" alt="image" src="https://github.com/user-attachments/assets/043e617c-8f3d-404f-ba9d-918459bcaeb1" />
-<img width="1237" height="922" alt="image" src="https://github.com/user-attachments/assets/9fc9e5ca-aa6f-4b4b-a7dd-a58e6cbf53d2" />
-| ![Desktop View](public/screenshots/desktop-preview.jpg) | <img src="public/screenshots/mobile-preview.jpg" width="280" alt="Mobile View"/> |
 
 ---
 
